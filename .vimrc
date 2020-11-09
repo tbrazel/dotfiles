@@ -13,10 +13,16 @@
 " Much of this was borrowed from https://github.com/dicai/dotfiles/blob/master/vimrc
 
 
+call has('python3')
+set pythonthreedll=/Library/Frameworks/Python.framework/Versions/3.6/Python
+set pythonthreehome=/Library/Frameworks/Python.framework/Versions/3.6
+" set pythondll=libpython3.8.so
 """"""""""""""""""""
 " Visual appearance
 """"""""""""""""""""
 
+" Fix swap file issues
+set shortmess+=A
 
 " Enable syntax highlighting
 syntax on
@@ -142,24 +148,49 @@ filetype off
 set rtp+=~/.vim/bundle/Vundle.vim
 set rtp+=~/.vim/bundle/ultisnips
 set rtp+=~/.vim/bundle/vim-colorschemes
+set rtp+=~/.config/
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 
-" Plugin 'sirver/ultisnips'
+" if has('nvim')
+"   Plugin 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+" else
+"   Plugin 'Shougo/deoplete.nvim'
+"   Plugin 'roxma/nvim-yarp'
+"   Plugin 'roxma/vim-hug-neovim-rpc'
+" endif
+" let g:deoplete#enable_at_startup = 1
+
+Plugin 'lervag/vimtex'
+    " Recognize .tex files as latex (instead of plaintex) for syntax highlighting
+    let g:tex_flavor = 'latex' 
+    " Disable vimtex
+    let g:vimtex_enabled=0
+    let g:latex_indent_enabled = 0
+    " Don't highlight underscores and other stuff
+    let g:tex_no_error=1
+
+ 
 Plugin 'honza/vim-snippets'
+Plugin 'sirver/ultisnips'
 	let g:UltiSnipsSnippetsDirectories = ["mycustomsnippets"]
 	let g:UltiSnipsUsePythonVersion = 3
-	let g:UltiSnipsExpandTrigger="<tab>"
-	let g:UltiSnipsJumpForwardTrigger="<tab>"
-	let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+	let g:UltiSnipsExpandTrigger='<tab>'
+    let g:UltiSnipsJumpForwardTrigger = '<tab>'
+    let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
     let g:UltiSnipsRemoveSelectModeMappings = 0
     let g:UltiSnipsEditSplit = 'vertical'
+
+
+
 Plugin 'flazz/vim-colorschemes'
 Plugin 'scrooloose/syntastic'
 
 " Anderson colorscheme
 Plugin 'gilgigilgil/anderson.vim'
 
+" Spacecamp colorscheme
+" Plugin 'jaredgorski/spacecamp'
 " Preferred colorscheme
 " colorscheme mod8
 " set guifont=Monaco:h13
@@ -177,19 +208,21 @@ Plugin 'scrooloose/nerdtree'
 " Open nerdtree with Control-n
     map <C-n> :NERDTreeToggle<CR>
 
+call vundle#end()           " required
 
-" Plugin 'lervag/vimtex'
-"	let g:vimtex_view_method='skim'
-"	let g:vimtex_quickfix_mode=0
-"        let g:vimtex_indent_on_ampersands = 0
-"        let g:vimtex_motion_enabled = 0
-        " disable latex autindentation
-" let g:vimtex_matchparen_enabled = 0     
-" let g:matchup_matchparen_deferred = 1     
-" let g:vimtex_matchparen_enabled = 0
 
-call vundle#end()
-filetype plugin indent on
+
+filetype plugin indent on   " required
+
+" let g:vimtex_complete_enabled=1
+"Integrate vimtex into depoplete
+" call deoplete#custom#var('omni', 'input_patterns', {
+"      \ 'tex': g:vimtex#re#deoplete
+"      \})
+
+
+
+" let g:deoplete#enable_at_startup = 0
 
                                                 
 
@@ -197,25 +230,50 @@ filetype plugin indent on
 " Filetype specific
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+
 filetype plugin on
 
-" Recognize .tex files as latex (instead of plaintex) for syntax highlighting.
-let g:tex_flavor="latex"
+" Integrate Vimtex
+ " call deoplete#custom#var('omni', 'input_patterns', {
+ "       \ 'tex': g:vimtex#re#deoplete
+ "       \})
 
-let g:latex_indent_enabled = 0
+ " let g:deoplete#disable_auto_complete = 1
+ " function! HandleTab() abort
+ "   " First, try to expand or jump on UltiSnips.
+ "   call UltiSnips#ExpandSnippetOrJump()
+ "   if g:ulti_expand_or_jump_res > 0
+ "     return ""
+ "   endif
+ "   " Then, check if we're in a completion menu
+ "   if pumvisible()
+ "     return "\<C-n>"
+ "   endif
+ "   " Then check if we're indenting.
+ "   let col = col('.') - 1
+ "   if !col || getline('.')[col - 1] =~ '\s'
+ "     return "\<Tab>"
+ "   endif
+ "   " Finally, trigger deoplete completion.
+ "   return deoplete#manual_complete()
+ " endfunction
 
-" Don't highlight underscores and other stuff
-let g:tex_no_error=1
+ " inoremap <silent> <Tab> <C-R>=HandleTab()<CR>
+
+
+
+
+" Control-r refreshes snippets
+nmap <buffer> <C-R> :call UltiSnips#RefreshSnippets()<CR>
+
 
 " Set the make program (rubber)
 autocmd FileType tex set makeprg=rubber\ --inplace\ --maxerr\ 1\ \ --pdf\ --short\ --quiet\ --force\ %
 " Mappings for compiling Latex file
-
-" Compile silently
-autocmd FileType tex nmap <buffer> <C-T> :silent !latexmk -synctex=1 -pdf %<CR>
-
-" Compile with info
-autocmd FileType tex nmap <buffer> <C-I> :!latexmk -synctex=1 -pdf %<CR>
+" Compile 
+autocmd FileType tex nmap <buffer> <C-T> :term++close latexmk -bibtex -synctex=1 -pdf %<CR>
+" autocmd FileType tex nmap <buffer> <C-T> :term++close pdflatex -synctex=1 -pdf %<CR>
+autocmd FileType tex nmap <buffer> <C-B> :term++close bibtex %<CR>
 
 " Clear aux files
 autocmd FileType tex nmap <buffer> <C-C> :!latexmk -c %<CR>
@@ -227,6 +285,11 @@ autocmd FileType tex nmap <buffer> C :!rubber --clean<CR>
 " Don't unindent when colon is entered
 autocmd FileType tex,latex setlocal indentkeys-=:
 
+" Fix wrapping issue
+autocmd FileType tex set textwidth=0
+
+autocmd FileType tex setlocal spell
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Autocommands
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -237,13 +300,12 @@ autocmd FilterWritePre * if &diff | set cc= | endif
 " Skeleton files
 autocmd! BufNewFile * silent! 0r ~/.vim/skel/template.%:e
 
-" Fix wrapping issue
-autocmd FileType tex    set textwidth=0
 
 
 """"""""""""""""
 " Other custom commands
 """"""""""""""""
+
 " Enable synctex
 function! SyncTexForward()
      let execstr = "silent !okular --unique %:p:r.pdf\\#src:".line(".")."%:p &"
@@ -254,21 +316,51 @@ endfunction
 nmap <Leader>f :call SyncTexForward()<CR>
 
 " Remember folds on save
-augroup remember_folds
+augroup AutoSaveFolds
   autocmd!
-  autocmd BufWinLeave * mkview
-  autocmd BufWinEnter * silent! loadview
+  au BufWinLeave ?* mkview 1
+  au BufWinEnter ?* silent loadview 1
 augroup END
 
 " Fix local typos by spellcheck with control-L
 " From https://castel.dev/post/lecture-notes-1/
+set spell
 setlocal spell
+set spellfile=$HOME/.vim/spell/en.utf-8.add
 set spelllang=en_us
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
+
+set nornu
+
 
 " See https://stackoverflow.com/questions/26917336/vim-specific-mkview-and-loadview-in-order-to-avoid-issues
 set viewoptions-=options
 set sessionoptions-=options
+
+
+"""""""""
+" Tabs
+"""""""""
+
+
+imap <D-1> <Esc>1gti
+imap <D-2> <Esc>2gti
+imap <D-3> <Esc>3gti
+imap <D-4> <Esc>4gti
+imap <D-5> <Esc>5gti
+imap <D-6> <Esc>6gti
+imap <D-7> <Esc>7gti
+imap <D-8> <Esc>8gti
+
+nmap <D-1> 1gti
+nmap <D-2> 2gti
+nmap <D-3> 3gti
+nmap <D-4> 4gti
+nmap <D-5> 5gti
+nmap <D-6> 6gti
+nmap <D-7> 7gti
+nmap <D-8> 8gti
+
 
 """"""""""
 " Typo correction
@@ -321,3 +413,5 @@ cabbrev delview <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'Delview' : 'delvie
 
 " Disable all filetype indentation
 filetype indent off
+
+
